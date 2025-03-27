@@ -120,7 +120,7 @@ class Paint {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.lineJoin = 'round';
     this.ctx.lineCap = 'round';
-    this.ctx.lineWidth = 8;
+    this.ctx.lineWidth = 10; // Increased line width for better visibility
     this.ctx.strokeStyle = '#000';
 
     for (let i = 0; i < this.points.length; i++) {
@@ -140,7 +140,7 @@ class Paint {
 
   clear() {
     this.points = [];
-    this.ctx.fillStyle = '#f4f4f4';
+    this.ctx.fillStyle = '#ffffff'; // Pure white background for better contrast
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
@@ -152,7 +152,7 @@ class Paint {
     return imageData.data;
   }
 
-  // Get a simplified representation of the drawn image
+  // Enhanced shape analysis
   getShape(): string {
     // No points means nothing drawn
     if (this.points.length === 0) return 'none';
@@ -176,127 +176,284 @@ class Paint {
       return count;
     }, 0);
 
-    // Return a simplified shape descriptor
+    // Calculate closed-ness (are the start and end points close?)
+    const startPoint = this.points[0];
+    const endPoint = this.points[this.points.length - 1];
+    const distance = Math.sqrt(
+      Math.pow(startPoint.x - endPoint.x, 2) + Math.pow(startPoint.y - endPoint.y, 2)
+    );
+    const isClosed = distance < 30;
+
+    // Calculate center of mass
+    const centerX = xs.reduce((sum, x) => sum + x, 0) / xs.length;
+    const centerY = ys.reduce((sum, y) => sum + y, 0) / ys.length;
+
+    // Return an enhanced shape descriptor
     if (strokes === 1 && aspectRatio > 3) return 'horizontal_line';
     if (strokes === 1 && aspectRatio < 0.3) return 'vertical_line';
     if (strokes === 1 && width < 40 && height < 40) return 'dot';
     if (strokes === 2 && Math.abs(aspectRatio - 1) < 0.3) return 'cross';
-    if (strokes >= 2 && width > 50 && height > 50) return 'complex';
+    if (isClosed && Math.abs(aspectRatio - 1) < 0.3) return 'circle';
+    if (isClosed && aspectRatio > 1.5) return 'ellipse';
+    if (this.points.length > 100 && width > 50 && height > 50) return 'complex';
+    if (this.isZigzag(xs, ys)) return 'zigzag';
+    
+    // Check for arc shapes (like 2, 3)
+    if (this.hasArcs()) return 'curved';
 
     return 'unknown';
   }
+
+  // Helper method to detect zigzag patterns (e.g., for 7, Z)
+  isZigzag(xs: number[], ys: number[]): boolean {
+    if (this.points.length < 20) return false;
+    
+    // Calculate direction changes
+    let directionChanges = 0;
+    let prevDirection = 0;
+    
+    for (let i = 2; i < xs.length; i++) {
+      const dx1 = xs[i-1] - xs[i-2];
+      const dx2 = xs[i] - xs[i-1];
+      
+      if ((dx1 * dx2 < 0) && Math.abs(dx1) > 5 && Math.abs(dx2) > 5) {
+        directionChanges++;
+      }
+    }
+    
+    return directionChanges >= 2;
+  }
+  
+  // Helper method to detect curved shapes
+  hasArcs(): boolean {
+    if (this.points.length < 15) return false;
+    
+    let totalAngleChange = 0;
+    for (let i = 2; i < this.points.length; i++) {
+      const p1 = this.points[i-2];
+      const p2 = this.points[i-1];
+      const p3 = this.points[i];
+      
+      if (p1.dragging && p2.dragging && p3.dragging) {
+        const angle1 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+        const angle2 = Math.atan2(p3.y - p2.y, p3.x - p2.x);
+        totalAngleChange += Math.abs(angle2 - angle1);
+      }
+    }
+    
+    return totalAngleChange > Math.PI * 1.5;
+  }
 }
 
-// Simplified neural network simulator
+// Enhanced neural network simulator
 class SimpleNeuralNetworkSimulator {
   // This method simulates what a real neural network would do
-  // It's a very crude simulation that recognizes some basic patterns
+  // With improved pattern recognition
   predict(canvas: Paint): { predictedClass: number; confidences: number[] } {
     const shape = canvas.getShape();
+    const points = canvas.points;
 
     // Initialize with equal low confidences
     const baseConfidences = Array(10).fill(0.05);
-
-    // Adjust confidences based on shape
-    switch (shape) {
-      case 'none':
-        // Return random guess with low confidence
-        return { predictedClass: Math.floor(Math.random() * 10), confidences: baseConfidences };
-
-      case 'vertical_line': {
-        // Likely a 1
-        const conf = [...baseConfidences];
-        conf[1] = 0.8;
-        conf[7] = 0.3;
-        return this.finalizeConfidences(conf);
-      }
-
-      case 'horizontal_line': {
-        // Could be part of several numbers
-        const conf = [...baseConfidences];
-        conf[0] = 0.2;
-        conf[4] = 0.1;
-        conf[7] = 0.3;
-        conf[9] = 0.1;
-        return this.finalizeConfidences(conf);
-      }
-
-      case 'dot': {
-        // Small isolated mark - could be a 1
-        const conf = [...baseConfidences];
-        conf[1] = 0.5;
-        return this.finalizeConfidences(conf);
-      }
-
-      case 'cross': {
-        // X shape - similar to 8
-        const conf = [...baseConfidences];
-        conf[8] = 0.7;
-        conf[4] = 0.4;
-        return this.finalizeConfidences(conf);
-      }
-
-      case 'complex': {
-        // More complex shape - make educated guesses based on the drawing
-        const conf = [...baseConfidences];
-
-        // Analyze the points to make a better guess
-        const points = canvas.points;
-        const xs = points.map(p => p.x);
-        const ys = points.map(p => p.y);
-
-        const centerX = (Math.min(...xs) + Math.max(...xs)) / 2;
-        const centerY = (Math.min(...ys) + Math.max(...ys)) / 2;
-
-        // Check if points form a rough circle around the center
-        const distances = points.map(p =>
-          Math.sqrt(Math.pow(p.x - centerX, 2) + Math.pow(p.y - centerY, 2))
-        );
-
-        const avgDistance = distances.reduce((sum, d) => sum + d, 0) / distances.length;
-        const distVariation = distances.reduce((sum, d) => sum + Math.abs(d - avgDistance), 0) / distances.length;
-
-        if (distVariation < 15) {
-          // Likely a circle shape (0, 6, 8, 9)
-          conf[0] = 0.7;
-          conf[6] = 0.3;
-          conf[8] = 0.3;
-          conf[9] = 0.3;
-        } else {
-          // Not a circle, try other common number shapes
-          const width = Math.max(...xs) - Math.min(...xs);
-          const height = Math.max(...ys) - Math.min(...ys);
-
-          if (width > height) {
-            // Wide shape (could be 2, 3, 5, 7)
-            conf[2] = 0.4;
-            conf[3] = 0.4;
-            conf[5] = 0.4;
-            conf[7] = 0.3;
-          } else {
-            // Tall shape (could be 1, 4, 7)
-            conf[1] = 0.4;
-            conf[4] = 0.5;
-            conf[7] = 0.4;
-          }
-        }
-
-        return this.finalizeConfidences(conf);
-      }
-
-      default: {
-        // Unknown shape, random guess with higher uncertainty
-        const conf = [...baseConfidences];
-        conf[Math.floor(Math.random() * 10)] = 0.3;
-        return this.finalizeConfidences(conf);
+    
+    // If no drawing, return random guess
+    if (shape === 'none') {
+      return { predictedClass: Math.floor(Math.random() * 10), confidences: baseConfidences };
+    }
+    
+    // Get drawing characteristics
+    const xs = points.map(p => p.x);
+    const ys = points.map(p => p.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const aspectRatio = width / height;
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    
+    // Calculate center point density vs edge density
+    const centerRegion = {
+      minX: centerX - width * 0.25,
+      maxX: centerX + width * 0.25,
+      minY: centerY - height * 0.25,
+      maxY: centerY + height * 0.25
+    };
+    
+    let centerPoints = 0;
+    let totalPoints = points.length;
+    
+    for (const p of points) {
+      if (p.x >= centerRegion.minX && p.x <= centerRegion.maxX && 
+          p.y >= centerRegion.minY && p.y <= centerRegion.maxY) {
+        centerPoints++;
       }
     }
+    
+    const centerDensity = centerPoints / totalPoints;
+    
+    // Calculate number of strokes
+    const strokes = points.reduce((count, point, i) => {
+      if (i === 0 || !point.dragging) return count + 1;
+      return count;
+    }, 0);
+
+    // Check if drawing has a loop
+    const hasLoop = this.hasLoop(points);
+    
+    // Now build confidence scores based on shape characteristics
+    const conf = [...baseConfidences];
+    
+    switch (shape) {
+      case 'vertical_line': {
+        // Highly likely a 1
+        conf[1] = 0.9;
+        conf[7] = 0.2;
+        break;
+      }
+      
+      case 'horizontal_line': {
+        // Most likely part of a 7 or minus sign
+        conf[7] = 0.5;
+        conf[0] = 0.1;
+        conf[4] = 0.1;
+        break;
+      }
+      
+      case 'dot': {
+        // Small isolated mark - likely 1
+        conf[1] = 0.6;
+        break;
+      }
+      
+      case 'cross': {
+        // X shape - similar to 8 or 4
+        conf[8] = 0.6;
+        conf[4] = 0.5;
+        conf[7] = 0.2;
+        break;
+      }
+      
+      case 'circle': {
+        // Circle - strong signal for 0
+        conf[0] = 0.85;
+        conf[6] = 0.4;
+        conf[8] = 0.3;
+        conf[9] = 0.3;
+        break;
+      }
+      
+      case 'zigzag': {
+        // Zigzag pattern - likely 2, 3, 7, or 5
+        conf[2] = 0.5;
+        conf[3] = 0.4;
+        conf[7] = 0.6;
+        conf[5] = 0.3;
+        break;
+      }
+      
+      case 'curved': {
+        // Curved shape - could be 2, 3, 5, 8, 9
+        conf[2] = 0.5;
+        conf[3] = 0.6;
+        conf[5] = 0.5;
+        conf[8] = 0.4;
+        conf[9] = 0.4;
+        break;
+      }
+      
+      case 'complex': {
+        // For complex shapes, use additional analysis
+        
+        // Open loops like 6, 9
+        if (hasLoop && centerDensity < 0.3) {
+          conf[6] = 0.7;
+          conf[9] = 0.7;
+          conf[8] = 0.4;
+        }
+        // Closed loops like 8, 0
+        else if (hasLoop && centerDensity > 0.3) {
+          conf[8] = 0.7;
+          conf[0] = 0.6;
+        }
+        // Angular shapes like 4, 7
+        else if (strokes >= 2 && !hasLoop) {
+          conf[4] = 0.7;
+          conf[7] = 0.6;
+          conf[2] = 0.4;
+        }
+        // Curved with straight elements like 2, 3, 5
+        else {
+          conf[2] = 0.5;
+          conf[3] = 0.6;
+          conf[5] = 0.6;
+        }
+        
+        // Further analyze based on quadrants with points
+        const quadrants = this.analyzeQuadrants(points, centerX, centerY);
+        
+        // Adjust probabilities based on quadrant analysis
+        if (quadrants.topLeft && quadrants.topRight && !quadrants.bottomLeft && quadrants.bottomRight) {
+          conf[2] += 0.2; // 2 typically has this pattern
+        }
+        if (quadrants.topLeft && quadrants.topRight && quadrants.bottomLeft && !quadrants.bottomRight) {
+          conf[5] += 0.2; // 5 often has this pattern
+        }
+        if (!quadrants.topLeft && quadrants.topRight && quadrants.bottomLeft && quadrants.bottomRight) {
+          conf[3] += 0.2; // 3 often has this pattern
+        }
+        
+        break;
+      }
+      
+      default: {
+        // For unknown shapes, use some randomness with bias toward common numbers
+        conf[Math.floor(Math.random() * 10)] = 0.3;
+        break;
+      }
+    }
+    
+    return this.finalizeConfidences(conf);
+  }
+  
+  // Helper to check if drawing contains a loop
+  private hasLoop(points: DrawPoint[]): boolean {
+    if (points.length < 20) return false;
+    
+    // Check if start and end points are close
+    const startPoint = points[0];
+    const endPoint = points[points.length - 1];
+    const distance = Math.sqrt(
+      Math.pow(startPoint.x - endPoint.x, 2) + 
+      Math.pow(startPoint.y - endPoint.y, 2)
+    );
+    
+    return distance < 30;
+  }
+  
+  // Helper to analyze which quadrants contain points
+  private analyzeQuadrants(points: DrawPoint[], centerX: number, centerY: number): Record<string, boolean> {
+    let topLeft = false;
+    let topRight = false;
+    let bottomLeft = false;
+    let bottomRight = false;
+    
+    for (const p of points) {
+      if (p.x < centerX && p.y < centerY) topLeft = true;
+      if (p.x >= centerX && p.y < centerY) topRight = true;
+      if (p.x < centerX && p.y >= centerY) bottomLeft = true;
+      if (p.x >= centerX && p.y >= centerY) bottomRight = true;
+    }
+    
+    return { topLeft, topRight, bottomLeft, bottomRight };
   }
 
   private finalizeConfidences(confidences: number[]): { predictedClass: number; confidences: number[] } {
     // Add some randomness to make it look more like a real neural network
     const confidencesWithRandomness = confidences.map(c => {
-      const randomness = Math.random() * 0.2 - 0.1; // -0.1 to +0.1
+      const randomness = Math.random() * 0.15 - 0.075; // -0.075 to +0.075 (reduced randomness)
       return Math.max(0, Math.min(1, c + randomness));
     });
 

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neural Numbers</title>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo-container">
+        <a href="index.html">
+          <img src="/src/assets/i-am-ai-logo-small.svg" alt="I AM A.I." class="logo">
+        </a>
+      </div>
+      <div class="language-switcher">
+        <a href="#" class="active">English</a>
+        <a href="#">Deutsch</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="title-section">
+      <h1>NEURAL NUMBERS</h1>
+      <p class="subtitle">
+        Experiment with an AI that can understand your handwriting and discover how this ability is slowly
+        developed through a learning process like the one humans follow.
+      </p>
+    </section>
+
+    <section class="neural-network-demo">
+      <div class="number-recognizer">
+        <div class="input-area">
+          <div class="drawing-container">
+            <div class="drawing-area-label">write a number between 0&nbsp;and&nbsp;9</div>
+            <canvas class="drawing-area" id="drawing-canvas"></canvas>
+          </div>
+        </div>
+        <div class="output-area">
+          <div class="output-display" id="result">?</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="explanation">
+      <p>
+        To understand handwriting is not an easy task for a computer. Handwriting is irregular by nature, characters change
+        shape even when written by the same person, there are slight variations in the way some characters are written,
+        and a change in the length or angle of a line might be all that's needed for one character to turn into another.
+        Humans have trouble understanding handwriting very often, even their own.
+      </p>
+      <p>
+        To help computers read we first simplified the task. Barcodes (which exist since 1951) only require to detect
+        an alternating sequence of black and white lines. OCR (Optical Character Recognition) can read text written in
+        arbitrary fonts, but relies on their regularity. It can also have trouble with ambiguous characters, so it's sometimes
+        helped by special fonts that use distinct character shapes. Palm Pilot devices from the late 90s allowed handwritten
+        input but used a special simplified alphabet with characters drawn in a particular size and with a specific set of strokes.
+      </p>
+
+      <div class="barcode-example">
+        <img src="/src/assets/neural-numbers-fig-1.svg" alt="Left, a barcode for the sequence 1234567890. Right, a font that facilitates OCR (Optical Character Recognition).">
+        <p class="caption">Left, a barcode for the sequence 1234567890. Right, a font that facilitates OCR (Optical Character Recognition).</p>
+      </div>
+
+      <p>
+        Programming an AI with a precise definition of the shape of numbers so it can tell them apart is not an easy task.
+        It has to be broad enough to deal with style variations, and the point at which a 1 becomes a 7, or a 3 becomes an 8,
+        is a very gray area. Humans learn the numbers by looking at examples and with time recognition is almost instantaneous and automatic.
+      </p>
+      <p>
+        The AI you used at the top of this page uses a type of system called an <strong>artificial neural network</strong> that also learns by
+        looking at examples. Neural networks have that name because they are inspired by biological brains and their collection
+        of neurons that connect and transmit signals to take input from the sensory organs and generate an appropriate response
+        in muscles or other organs. The artificial neural networks are similarly made of thousands of artificial neurons connected
+        in a very complex network and they also exchange simple signals that travel between an input and an output.
+      </p>
+    </section>
+
+    <section class="neural-network-demo">
+      <div class="number-recognizer">
+        <div class="input-area">
+          <div class="drawing-container">
+            <div class="drawing-area-label">write a number between 0&nbsp;and&nbsp;9</div>
+            <canvas class="drawing-area" id="normalized-canvas"></canvas>
+          </div>
+        </div>
+        <div class="output-area">
+          <div class="output-display" id="normalized-result">?</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="explanation">
+      <p>
+        Since we're limiting the task to recognizing numbers, we have ten outputs: one for each possible character between 0 and 9.
+        Each output produces a signal which tells us how much confidence the network has that the input is that particular number.
+        At any point the neural network might consider different answers as likely. In the next recognizer you can see bars for each output,
+        which grow as the signal becomes stronger. Try drawing a number slowly and see how the bars get bigger and smaller as you proceed.
+      </p>
+    </section>
+
+    <section class="neural-network-demo">
+      <div class="number-recognizer">
+        <div class="input-area">
+          <div class="drawing-container">
+            <div class="drawing-area-label">write a number between 0&nbsp;and&nbsp;9</div>
+            <canvas class="drawing-area" id="bars-canvas"></canvas>
+          </div>
+        </div>
+        <div class="output-area output-with-bars">
+          <div class="output-display" id="bars-result">?</div>
+          <div class="confidence-bars" id="confidence-bars">
+            <div class="bar-container">
+              <div class="bar-label">0</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-0"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">1</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-1"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">2</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-2"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">3</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-3"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">4</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-4"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">5</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-5"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">6</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-6"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">7</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-7"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">8</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-8"></div></div>
+            </div>
+            <div class="bar-container">
+              <div class="bar-label">9</div>
+              <div class="bar-track"><div class="bar-fill" id="bar-9"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="explanation">
+      <p>
+        Each input is connected to all others and then to the outputs through around 80.000 connections.
+        These connections grow stronger or become weaker as the training progresses and substructures
+        that are able to detect certain patterns and shapes in the input emerge.
+      </p>
+
+      <div class="network-visualization">
+        <img src="/src/assets/neural-numbers-fig-2.png" alt="Rendering of the connections in our neural network">
+        <p class="caption">
+          Rendering of the connections in our neural network. Inputs on the left side, the 10 outputs on the right.
+          Both are connected through a middle layer that groups inputs in different combinations. These combinations are
+          established through training and help to detect visual patterns.
+        </p>
+      </div>
+
+      <p>
+        Our network's training was done with the help of the <a href="https://en.wikipedia.org/wiki/MNIST_database" target="_blank">MNIST database</a>,
+        a collection of 70.000 images of individual digits handwritten by high school students and employees of the
+        American Census Bureau that are shared to help AI researchers. Each image in the MNIST database was pre-labeled
+        by a human with the number pictured, so the AI can verify whether its output was correct or not by itself.
+      </p>
+
+      <div class="mnist-example">
+        <img src="/src/assets/neural-numbers-fig-3.jpg" alt="MNIST database examples">
+        <p class="caption">
+          Some numbers from the MNIST database that were used for training our neural network.
+        </p>
+        <p class="attribution">
+          Picture by <a href="https://commons.wikimedia.org/w/index.php?curid=64810040" target="_blank">Josef Steppan</a>.
+          Used under a CC BY-SA 4.0 license.
+        </p>
+      </div>
+    </section>
+
+    <section class="further-experiments">
+      <h2>Further experiments</h2>
+      <p>
+        Neural networks often understand complex shapes as the combination of simpler visual patterns.
+        You can explore the way our fully trained recognizer sees numbers by drawing certain shapes and seeing
+        which output bars activate. For instance, notice how drawing a plus sign raises the 4 signal, or how drawing
+        an x raises the 8. Other interesting shapes to try are two or three parallel lines (either vertical or horizontal),
+        rotated T shapes and half circles.
+      </p>
+      <p>
+        The network can also deal very well with noisy images. Try drawing a number using dots or dashes instead
+        of full lines and you'll notice it's still able to identify the numbers quite well.
+      </p>
+    </section>
+
+    <section class="exhibition-info">
+      <h2>In the I AM A.I. Exhibition</h2>
+      <div class="exhibition-container">
+        <p>
+          You can experiment with the interactive <strong>Neural Numbers</strong> exhibit this trail is based on,
+          which allows you to train the neural network up to any point and try out many different options.
+          Also, the <strong>Talk to Me</strong> exhibit shows in detail how neural networks can be used for speech recognition.
+        </p>
+        <div class="learn-more">
+          <a href="exhibition.html" class="button">Learn how to visit</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-container">
+      <div class="footer-text">
+        Text is available under the <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">Creative Commons Attribution License</a>.
+      </div>
+      <div class="footer-nav">
+        <div class="footer-column">
+          <h3>Continue exploring</h3>
+          <ul>
+            <li><a href="#">Gradient Descent</a></li>
+            <li><a href="#">We need to talk, AI</a></li>
+            <li><a href="#">Build your own AI</a></li>
+          </ul>
+        </div>
+        <div class="footer-column">
+          <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Visit the exhibition</a></li>
+            <li><a href="#">Press kit</a></li>
+            <li><a href="#">News</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-sponsors">
+        <a href="https://about.imaginary.org/" target="_blank">
+          <img src="/src/assets/imaginary-logo.svg" alt="IMAGINARY">
+        </a>
+        <a href="https://www.carl-zeiss-stiftung.de/" target="_blank">
+          <img src="/src/assets/czs-logo.svg" alt="Carl Zeiss Foundation">
+        </a>
+        <div class="copyright">
+          2020 - IMAGINARY gGmbH
+          <a href="#">Impressum</a>
+          <a href="#">Privacy Policy</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
